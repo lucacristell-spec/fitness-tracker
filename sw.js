@@ -1,5 +1,5 @@
 const CACHE = 'fitness-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const ASSETS = ['/fitness-tracker/', '/fitness-tracker/index.html', '/fitness-tracker/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
