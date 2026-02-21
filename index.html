@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luca — Fitness Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6366f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fitness">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg: #0d0d12;
+    --surface: #16161f;
+    --surface2: #1e1e2a;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --yoga: #a78bfa;
+    --gym: #f87171;
+    --run: #34d399;
+    --accent: #6366f1;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 56px;
+  }
+  nav .logo { font-weight: 700; font-size: 16px; color: var(--text); }
+  nav .logo span { color: var(--accent); }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  nav a.active, nav a:hover { color: var(--text); border-color: var(--accent); }
+
+  /* LAYOUT */
+  main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  /* STATS ROW */
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 32px; }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat .num { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .stat .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stat.yoga .num { color: var(--yoga); }
+  .stat.gym  .num { color: var(--gym); }
+  .stat.run  .num { color: var(--run); }
+  .stat.total .num { color: var(--accent); }
+
+  /* SECTION TITLE */
+  h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+
+  /* FORM */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 32px;
+  }
+  .activity-btns { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .act-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    min-width: 100px;
+  }
+  .act-btn .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+  .act-btn.selected.yoga { border-color: var(--yoga); color: var(--yoga); background: #1e1830; }
+  .act-btn.selected.gym  { border-color: var(--gym);  color: var(--gym);  background: #2a1515; }
+  .act-btn.selected.run  { border-color: var(--run);  color: var(--run);  background: #0f2a1e; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .form-group input, .form-group textarea, .form-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-group textarea { resize: none; height: 80px; }
+
+  .btn-log {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity .2s;
+  }
+  .btn-log:hover { opacity: 0.85; }
+
+  /* HISTORY */
+  .history { display: flex; flex-direction: column; gap: 12px; }
+  .session-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color .2s;
+  }
+  .session-card:hover { border-color: #3a3a5a; }
+  .session-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .session-icon.yoga { background: #1e1830; }
+  .session-icon.gym  { background: #2a1515; }
+  .session-icon.run  { background: #0f2a1e; }
+  .session-info { flex: 1; }
+  .session-info .type {
+    font-size: 14px; font-weight: 600; text-transform: capitalize; margin-bottom: 2px;
+  }
+  .session-info .type.yoga { color: var(--yoga); }
+  .session-info .type.gym  { color: var(--gym); }
+  .session-info .type.run  { color: var(--run); }
+  .session-info .note { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .session-meta { text-align: right; flex-shrink: 0; }
+  .session-meta .duration { font-size: 18px; font-weight: 700; color: var(--text); }
+  .session-meta .mins { font-size: 11px; color: var(--muted); }
+  .session-meta .date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .session-delete {
+    background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px;
+    opacity: 0; transition: opacity .2s;
+    padding: 4px 8px;
+  }
+  .session-card:hover .session-delete { opacity: 1; }
+  .session-delete:hover { color: var(--gym); }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty p { font-size: 15px; }
+
+  /* PAGE VIEWS */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #2a2a3a; border: 1px solid var(--border);
+    color: var(--text); padding: 12px 24px; border-radius: 24px;
+    font-size: 14px; font-weight: 500;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  /* STREAK */
+  .streak-banner {
+    background: linear-gradient(135deg, #1a1e3a, #1e1a3a);
+    border: 1px solid #3a3060;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+  }
+  .streak-banner .fire { font-size: 24px; }
+  .streak-banner strong { color: var(--yoga); }
+
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Luca <span>Fitness</span></div>
+  <a onclick="showPage('log')" id="nav-log" class="active">Log</a>
+  <a onclick="showPage('history')" id="nav-history">History</a>
+  <a onclick="showPage('stats')" id="nav-stats">Stats</a>
+</nav>
+
+<main>
+
+  <!-- LOG PAGE -->
+  <div class="page active" id="page-log">
+    <h2>Log a Session</h2>
+    <div class="form-card">
+      <div class="activity-btns">
+        <div class="act-btn yoga" onclick="selectActivity('yoga')" id="btn-yoga">
+          <span class="icon">🧘</span>Yoga
+        </div>
+        <div class="act-btn gym" onclick="selectActivity('gym')" id="btn-gym">
+          <span class="icon">🏋️</span>Gym
+        </div>
+        <div class="act-btn run" onclick="selectActivity('run')" id="btn-run">
+          <span class="icon">🏃</span>Running
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="input-date">
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input type="number" id="input-duration" placeholder="60" min="1" max="480">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Notes (optional)</label>
+        <textarea id="input-notes" placeholder="How did it feel? What did you work on?"></textarea>
+      </div>
+
+      <button class="btn-log" onclick="logSession()">Save Session</button>
+    </div>
+  </div>
+
+  <!-- HISTORY PAGE -->
+  <div class="page" id="page-history">
+    <h2>Session History</h2>
+    <div class="history" id="history-list"></div>
+  </div>
+
+  <!-- STATS PAGE -->
+  <div class="page" id="page-stats">
+    <h2>Your Stats</h2>
+    <div id="streak-area"></div>
+    <div class="stats" id="stats-grid">
+      <div class="stat total"><div class="num" id="s-total">0</div><div class="lbl">Total Sessions</div></div>
+      <div class="stat yoga"><div class="num" id="s-yoga">0</div><div class="lbl">Yoga</div></div>
+      <div class="stat gym"><div class="num" id="s-gym">0</div><div class="lbl">Gym</div></div>
+      <div class="stat run"><div class="num" id="s-run">0</div><div class="lbl">Running</div></div>
+    </div>
+    <div class="stats">
+      <div class="stat total"><div class="num" id="s-hours">0</div><div class="lbl">Total Hours</div></div>
+      <div class="stat yoga"><div class="num" id="s-yoga-h">0</div><div class="lbl">Yoga Hours</div></div>
+      <div class="stat gym"><div class="num" id="s-gym-h">0</div><div class="lbl">Gym Hours</div></div>
+      <div class="stat run"><div class="num" id="s-run-h">0</div><div class="lbl">Run Hours</div></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let sessions = JSON.parse(localStorage.getItem('fitness_sessions') || '[]');
+  let selectedActivity = null;
+
+  // Set today's date as default
+  document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+
+  function selectActivity(type) {
+    selectedActivity = type;
+    ['yoga','gym','run'].forEach(t => {
+      const el = document.getElementById('btn-' + t);
+      el.classList.remove('selected');
+    });
+    document.getElementById('btn-' + type).classList.add('selected');
+  }
+
+  function logSession() {
+    if (!selectedActivity) { showToast('Pick an activity first!'); return; }
+    const date = document.getElementById('input-date').value;
+    const duration = parseInt(document.getElementById('input-duration').value);
+    const notes = document.getElementById('input-notes').value.trim();
+
+    if (!date) { showToast('Please pick a date'); return; }
+    if (!duration || duration < 1) { showToast('Add a duration'); return; }
+
+    const session = {
+      id: Date.now(),
+      type: selectedActivity,
+      date,
+      duration,
+      notes
+    };
+    sessions.unshift(session);
+    save();
+
+    // Reset form
+    document.getElementById('input-duration').value = '';
+    document.getElementById('input-notes').value = '';
+    document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+    ['yoga','gym','run'].forEach(t => document.getElementById('btn-' + t).classList.remove('selected'));
+    selectedActivity = null;
+
+    showToast('Session saved! 💪');
+  }
+
+  function deleteSession(id) {
+    sessions = sessions.filter(s => s.id !== id);
+    save();
+    renderHistory();
+  }
+
+  function save() {
+    localStorage.setItem('fitness_sessions', JSON.stringify(sessions));
+    renderHistory();
+    renderStats();
+  }
+
+  const icons = { yoga: '🧘', gym: '🏋️', run: '🏃' };
+
+  function renderHistory() {
+    const el = document.getElementById('history-list');
+    if (!sessions.length) {
+      el.innerHTML = `<div class="empty"><div class="icon">📋</div><p>No sessions yet. Log your first one!</p></div>`;
+      return;
+    }
+    el.innerHTML = sessions.map(s => `
+      <div class="session-card">
+        <div class="session-icon ${s.type}">${icons[s.type]}</div>
+        <div class="session-info">
+          <div class="type ${s.type}">${s.type.charAt(0).toUpperCase() + s.type.slice(1)}</div>
+          ${s.notes ? `<div class="note">${s.notes}</div>` : ''}
+        </div>
+        <div class="session-meta">
+          <div class="duration">${s.duration}</div>
+          <div class="mins">min</div>
+          <div class="date">${formatDate(s.date)}</div>
+        </div>
+        <button class="session-delete" onclick="deleteSession(${s.id})" title="Delete">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function renderStats() {
+    const totals = { yoga: 0, gym: 0, run: 0 };
+    const mins = { yoga: 0, gym: 0, run: 0 };
+    sessions.forEach(s => { totals[s.type]++; mins[s.type] += s.duration; });
+
+    const totalSessions = sessions.length;
+    const totalMins = mins.yoga + mins.gym + mins.run;
+
+    document.getElementById('s-total').textContent = totalSessions;
+    document.getElementById('s-yoga').textContent = totals.yoga;
+    document.getElementById('s-gym').textContent = totals.gym;
+    document.getElementById('s-run').textContent = totals.run;
+    document.getElementById('s-hours').textContent = Math.round(totalMins / 60);
+    document.getElementById('s-yoga-h').textContent = Math.round(mins.yoga / 60);
+    document.getElementById('s-gym-h').textContent = Math.round(mins.gym / 60);
+    document.getElementById('s-run-h').textContent = Math.round(mins.run / 60);
+
+    // Streak
+    const streak = calcStreak();
+    const sa = document.getElementById('streak-area');
+    if (streak > 0) {
+      sa.innerHTML = `<div class="streak-banner"><span class="fire">🔥</span><div>You're on a <strong>${streak}-day streak</strong> — keep going!</div></div>`;
+    } else {
+      sa.innerHTML = '';
+    }
+  }
+
+  function calcStreak() {
+    if (!sessions.length) return 0;
+    const days = [...new Set(sessions.map(s => s.date))].sort().reverse();
+    const today = new Date().toISOString().split('T')[0];
+    if (days[0] !== today && days[0] !== yesterday()) return 0;
+    let streak = 1;
+    for (let i = 1; i < days.length; i++) {
+      const prev = new Date(days[i-1]);
+      const curr = new Date(days[i]);
+      const diff = (prev - curr) / 86400000;
+      if (diff === 1) streak++;
+      else break;
+    }
+    return streak;
+  }
+
+  function yesterday() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  }
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+    if (page === 'history') renderHistory();
+    if (page === 'stats') renderStats();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Init
+  renderStats();
+
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
